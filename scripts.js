@@ -17,7 +17,7 @@ function encrypt(method) {
             break;
         case "alberti":
             result = albertiCipher(text);
-            animateAlbertiEncryption(text);
+            createAlbertiWheel();
             break;
         default:
             result = "Método no encontrado";
@@ -242,62 +242,145 @@ function generateCesarVisualization(shift) {
     return table.node().outerHTML;
 }
 
-function albertiCipher(text) {
-    const disk = "PONMLKJZYXWVUTSRQIHGFEDCBA";
-    return text.toUpperCase().split('').map(char => {
-        let index = char.charCodeAt(0) - 65;
-        return (index >= 0 && index < 26) ? disk[index] : char;
-    }).join('');
+function createAlbertiWheel() {
+    let text = document.getElementById("textInput").value;
+    if (!text) {
+        Swal.fire("Error", "Debe ingresar un texto válido", "error");
+        return;
+    }
+    Swal.fire({
+        title: "Disco de Alberti",
+        html: `<p>Texto Original: <span id='original-text'>${text}</span></p>
+               <p>Encriptado: <span id='alberti-match'></span></p>
+               <canvas id='albertiCanvas' width='330' height='330' style='border: 2px solid black;'></canvas>
+               <br>
+               <button onclick='rotateAlbertiWheel()' class='btn btn-primary'>Girar Ruleta</button>
+               <button onclick='startAlbertiEncryption()' class='btn btn-success'>Iniciar</button>`
+    });
+    drawAlbertiWheel();
 }
 
-function animateAlbertiEncryption(text) {
-    Swal.fire({
-        title: "Cifrado de Alberti",
-        html: `<p>Texto Original: ${text}</p><p>Encriptado: <span id='anim-text'></span></p><div id='alberti-table'></div><p id='alberti-match'></p>`
-    });
+let rotationSteps = 0;
+const normalAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const albertiAlphabet = "PONMLKJZYXWVUTSRQIHGFEDCBA";
+
+function drawAlbertiWheel() {
+    let canvas = document.getElementById("albertiCanvas");
+    if (!canvas) return;
+    let ctx = canvas.getContext("2d");
     
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let centerX = canvas.width / 2;
+    let centerY = canvas.height / 2;
+    let outerRadius = 130;
+    let innerRadius = 90;
+    let angleStep = (2 * Math.PI) / 26;
+    
+    ctx.font = "14px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    
+    // Dibuja el círculo exterior (alfabeto normal)
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, outerRadius, 0, 2 * Math.PI);
+    ctx.fillStyle = "rgb(184, 233, 217)";
+    ctx.fill();
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    for (let i = 0; i < 26; i++) {
+        let angle = i * angleStep;
+        let x = centerX + Math.cos(angle) * (outerRadius - 15);
+        let y = centerY + Math.sin(angle) * (outerRadius - 15);
+        ctx.fillStyle = "black";
+        ctx.fillText(normalAlphabet[i], x, y);
+
+        
+    }
+    
+    // Dibuja el círculo interior (alfabeto cifrado)
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
+    ctx.fillStyle = "rgb(109, 160, 143)";
+    ctx.fill();
+    ctx.stroke();
+    
+    for (let i = 0; i < 26; i++) {
+        let rotatedIndex = (i + rotationSteps) % 26;
+        let angle = i * angleStep;
+        let x = centerX + Math.cos(angle) * (innerRadius - 15);
+        let y = centerY + Math.sin(angle) * (innerRadius - 15);
+        ctx.fillStyle = "black";
+        ctx.fillText(albertiAlphabet[rotatedIndex], x, y);
+    }
+
+    // Dibuja líneas divisorias entre las letras
+    for (let i = 0; i < 26; i++) {
+        let angle = i * angleStep;
+        let startX1 = centerX;
+        let startY1 = centerY;
+        let endX1 = centerX + Math.cos(angle - angleStep / 2) * (innerRadius);
+        let endY1 = centerY + Math.sin(angle - angleStep / 2) * (innerRadius);
+        let startX2 = centerX + Math.cos(angle - angleStep / 2) * (innerRadius);
+        let startY2 = centerY + Math.sin(angle - angleStep / 2) * (innerRadius);
+        let endX2 = centerX + Math.cos(angle - angleStep / 2) * (outerRadius);
+        let endY2 = centerY + Math.sin(angle - angleStep / 2) * (outerRadius);
+        
+        ctx.beginPath();
+        ctx.moveTo(startX1, startY1);
+        ctx.lineTo(endX1, endY1);
+        ctx.moveTo(startX2, startY2);
+        ctx.lineTo(endX2, endY2);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "black";
+        ctx.stroke();
+    }
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 10, 0, 2 * Math.PI);
+    ctx.fillStyle = "rgb(59, 88, 79)";
+    ctx.fill();
+    ctx.stroke();
+}
+
+function rotateAlbertiWheel() {
+    rotationSteps = (rotationSteps + 1) % 26;
+    drawAlbertiWheel();
+}
+
+function albertiCipher(text) {
+    let mapping = {};
+    for (let i = 0; i < 26; i++) {
+        let rotatedIndex = (i + rotationSteps) % 26;
+        mapping[normalAlphabet[i]] = albertiAlphabet[rotatedIndex];
+    }
+    return text.toUpperCase().split('').map(char => mapping[char] || char).join('');
+}
+
+function startAlbertiEncryption() {
+    let text = document.getElementById("textInput").value.toUpperCase();
+    if (!text) {
+        Swal.fire("Error", "Debe ingresar un texto válido", "error");
+        return;
+    }
     let encodedText = albertiCipher(text);
-    d3.select("#alberti-table").html(generateAlbertiVisualization());
+    
     let index = 0;
     function animate() {
-        d3.selectAll("td").style("background", "");
-        if (index < encodedText.length) {
+        if (index < text.length) {
             let char = text[index].toUpperCase();
             let encodedChar = albertiCipher(char);
+            
             if (!/[A-Z]/.test(char)) {
-                document.getElementById('anim-text').innerText += char;
+                document.getElementById('alberti-match').innerText += char;
             } else {
-                document.getElementById('anim-text').innerText += encodedChar;
-                document.getElementById('alberti-match').innerText = `Letra: ${char} → Código: ${encodedChar}`;
-                let cell = d3.select(`#alberti-char-${char}`);
-                if (!cell.empty()) {
-                    cell.transition().duration(1000).style("background", "yellow");
-                }
+                document.getElementById('alberti-match').innerText += encodedChar;
             }
             index++;
-            setTimeout(animate, 1000);
+            setTimeout(animate, 500);
         }
     }
+    document.getElementById('alberti-match').innerText = "";
     animate();
 }
-
-function generateAlbertiVisualization() {
-    let normalAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    let albertiAlphabet = "PONMLKJZYXWVUTSRQIHGFEDCBA";
-    let table = d3.create("table").attr("border", 1).style("width", "100%").style("text-align", "center");
-    let thead = table.append("thead");
-    let tbody = table.append("tbody");
-    
-    let headerRow = thead.append("tr");
-    normalAlphabet.split("").forEach(letter => {
-        headerRow.append("th").text(letter);
-    });
-    
-    let row = tbody.append("tr");
-    albertiAlphabet.split("").forEach(letter => {
-        row.append("td").text(letter);
-    });
-    
-    return table.node().outerHTML;
-}
-
