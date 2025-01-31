@@ -31,7 +31,7 @@ function showInfo(method) {
     switch (method) {
         case "polibio":
             title = "Cifrado de Polibio";
-            message = "El cifrado de Polibio es un método de sustitución que usa una matriz de 5x5 para representar letras con pares de números.";
+            message = "El cifrado de Polibio es un método de sustitución que usa una matriz de 5x5 para representar letras con pares de números. El código de las letras es la fila y la tabla en la que se encuentran.";
             break;
         case "cesar":
             title = "Código César";
@@ -92,7 +92,7 @@ function generatePolibioTable(text) {
         ["5", "W", "X", "Y", "Z", " "]
     ];
     
-    let table = d3.create("table").attr("border", 1).style("width", "100%").style("text-align", "center");
+    let table = d3.create("table").attr("border", 1).style("width", "100%").style("text-align", "center").style("margin", "10px");
     let thead = table.append("thead");
     let tbody = table.append("tbody");
     
@@ -146,7 +146,7 @@ function animatePolibioEncryption(text) {
                 }
             }
             index++;
-            setTimeout(animate, 1300); // Aumenta el tiempo para evitar superposiciones
+            setTimeout(animate, 1400); // Aumenta el tiempo para evitar superposiciones
         }
     }
     setTimeout(() => {
