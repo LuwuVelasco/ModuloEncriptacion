@@ -170,57 +170,75 @@ function cesarCipher(text, shift) {
 function animateCesarEncryption(text) {
     Swal.fire({
         title: "Cifrado César",
-        html: `<p>Ingrese el desplazamiento: <input id='cesar-shift' type='number' min='1' max='25' value='3'></p>
-               <button onclick='startCesarEncryption("${text}")'>Iniciar</button>
-               <p>Texto Original: ${text}</p><p>Encriptado: <span id='anim-text'></span></p><div id='cesar-table'></div><p id='cesar-match'></p>`
+        html: `<p>Ingrese el desplazamiento: <input id='cesar-shift' type='number' min='1' max='26' class="form-control" value='3' ></p>
+               <button onclick='startCesarEncryption("${text}")' type="button" class="btn btn-success" style="margin-bottom: 10px;">Iniciar</button>
+               <p>Texto Original: ${text}</p><p>Encriptado: <span id='anim-text'></span></p>
+               <div id='cesar-table'></div><p id='cesar-match'></p>`
     });
 }
 
 function startCesarEncryption(text) {
     let shift = parseInt(document.getElementById("cesar-shift").value);
+
+    // Validación del shift
+    if (isNaN(shift) || shift < 1 || shift > 26) {
+        Swal.fire("Error", "Por favor, ingrese un desplazamiento válido entre 1 y 25.", "error");
+        return;
+    }
+
     let encodedText = cesarCipher(text, shift);
-    d3.select("#cesar-table").html(generateCesarVisualization(text, shift));
+    d3.select("#cesar-table").html(generateCesarVisualization(shift));
     let index = 0;
+
     function animate() {
-        d3.selectAll("td").style("background", "");
-        if (index < encodedText.length) {
+        // Limpiar todas las celdas antes de resaltar
+        d3.selectAll("td, th").transition().duration(100).style("background", "");
+
+        if (index < text.length) {
             let char = text[index].toUpperCase();
             let encodedChar = cesarCipher(char, shift);
+
             if (!/[A-Z]/.test(char)) {
                 document.getElementById('anim-text').innerText += char;
             } else {
                 document.getElementById('anim-text').innerText += encodedChar;
                 document.getElementById('cesar-match').innerText = `Letra: ${char} → Código: ${encodedChar}`;
-                let cell = d3.select(`#cesar-char-${char}`);
-                if (!cell.empty()) {
-                    cell.transition().duration(1000).style("background", "yellow");
+
+                let originalCell = d3.select(`#cesar-char-${char}`);
+                let shiftedCell = d3.select(`#cesar-shifted-${encodedChar}`);
+
+                if (!originalCell.empty()) {
+                    originalCell.transition().duration(500).style("background", "rgb(71,235,180)");
+                }
+                if (!shiftedCell.empty()) {
+                    shiftedCell.transition().duration(500).style("background", "rgb(144, 211, 189)");
                 }
             }
             index++;
-            setTimeout(animate, 1000);
+            setTimeout(animate, 1200);
         }
     }
     animate();
 }
 
-function generateCesarVisualization(text, shift) {
+function generateCesarVisualization(shift) {
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const shiftedAlphabet = alphabet.slice(shift) + alphabet.slice(0, shift);
-    
-    let table = d3.create("table").attr("border", 1).style("width", "100%").style("text-align", "center");
+
+    let table = d3.create("table").attr("border", 1).style("width", "100%").style("text-align", "center").style("margin", "10px");
     let thead = table.append("thead");
     let tbody = table.append("tbody");
-    
+
     let headerRow = thead.append("tr");
     alphabet.split("").forEach(letter => {
         headerRow.append("th").text(letter).attr("id", `cesar-char-${letter}`);
     });
-    
+
     let row = tbody.append("tr");
     shiftedAlphabet.split("").forEach(letter => {
-        row.append("td").text(letter);
+        row.append("td").text(letter).attr("id", `cesar-shifted-${letter}`);
     });
-    
+
     return table.node().outerHTML;
 }
 
