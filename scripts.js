@@ -261,6 +261,7 @@ function createAlbertiWheel() {
 }
 
 let rotationSteps = 0;
+let targetRotationSteps = 0;
 const normalAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const albertiAlphabet = "PONMLKJZYXWVUTSRQIHGFEDCBA";
 
@@ -296,7 +297,16 @@ function drawAlbertiWheel() {
         ctx.fillStyle = "black";
         ctx.fillText(normalAlphabet[i], x, y);
 
-        
+        let startX2 = centerX + Math.cos(angle - angleStep / 2) * (innerRadius);
+        let startY2 = centerY + Math.sin(angle - angleStep / 2) * (innerRadius);
+        let endX2 = centerX + Math.cos(angle - angleStep / 2) * (outerRadius);
+        let endY2 = centerY + Math.sin(angle - angleStep / 2) * (outerRadius);
+        ctx.beginPath();
+        ctx.moveTo(startX2, startY2);
+        ctx.lineTo(endX2, endY2);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "black";
+        ctx.stroke();
     }
     
     // Dibuja el círculo interior (alfabeto cifrado)
@@ -313,30 +323,20 @@ function drawAlbertiWheel() {
         let y = centerY + Math.sin(angle) * (innerRadius - 15);
         ctx.fillStyle = "black";
         ctx.fillText(albertiAlphabet[rotatedIndex], x, y);
-    }
 
-    // Dibuja líneas divisorias entre las letras
-    for (let i = 0; i < 26; i++) {
-        let angle = i * angleStep;
         let startX1 = centerX;
         let startY1 = centerY;
         let endX1 = centerX + Math.cos(angle - angleStep / 2) * (innerRadius);
         let endY1 = centerY + Math.sin(angle - angleStep / 2) * (innerRadius);
-        let startX2 = centerX + Math.cos(angle - angleStep / 2) * (innerRadius);
-        let startY2 = centerY + Math.sin(angle - angleStep / 2) * (innerRadius);
-        let endX2 = centerX + Math.cos(angle - angleStep / 2) * (outerRadius);
-        let endY2 = centerY + Math.sin(angle - angleStep / 2) * (outerRadius);
-        
         ctx.beginPath();
         ctx.moveTo(startX1, startY1);
         ctx.lineTo(endX1, endY1);
-        ctx.moveTo(startX2, startY2);
-        ctx.lineTo(endX2, endY2);
         ctx.lineWidth = 1;
         ctx.strokeStyle = "black";
         ctx.stroke();
     }
 
+    // Dibuja el punto central
     ctx.beginPath();
     ctx.arc(centerX, centerY, 10, 0, 2 * Math.PI);
     ctx.fillStyle = "rgb(59, 88, 79)";
@@ -345,8 +345,16 @@ function drawAlbertiWheel() {
 }
 
 function rotateAlbertiWheel() {
-    rotationSteps = (rotationSteps + 1) % 26;
-    drawAlbertiWheel();
+    targetRotationSteps = (targetRotationSteps + 1) % 26;
+    animateRotation();
+}
+
+function animateRotation() {
+    if (rotationSteps !== targetRotationSteps) {
+        rotationSteps = (rotationSteps + 1) % 26;
+        drawAlbertiWheel();
+        requestAnimationFrame(animateRotation);
+    }
 }
 
 function albertiCipher(text) {
