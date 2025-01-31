@@ -92,7 +92,7 @@ function generatePolibioTable(text) {
         ["5", "W", "X", "Y", "Z", " "]
     ];
     
-    let table = d3.create("table").attr("border", 1).style("width", "100%" ).style("text-align", "center");
+    let table = d3.create("table").attr("border", 1).style("width", "100%").style("text-align", "center");
     let thead = table.append("thead");
     let tbody = table.append("tbody");
     
@@ -104,7 +104,7 @@ function generatePolibioTable(text) {
     rows.forEach(row => {
         let tr = tbody.append("tr");
         row.forEach((cell, index) => {
-            let cellValue = cell.includes("/") ? "24" : polybiusSquare[cell] || "";
+            let cellValue = cell.includes("/") ? (cell === "I/J" ? "24" : "45") : polybiusSquare[cell] || "";
             let td = tr.append(index === 0 ? "th" : "td").text(cell).attr("id", cellValue ? `cell-${cellValue}` : "");
         });
     });
@@ -129,10 +129,12 @@ function animatePolibioEncryption(text) {
     let encodedText = text.toUpperCase().split('').map(char => polybiusSquare[char] || char);
     let index = 0;
     function animate() {
-        d3.selectAll("td").style("background", "");
+        d3.selectAll("td").transition().duration(500).style("background", ""); // Despinta todas las celdas antes de marcar la siguiente
+        
         if (index < encodedText.length) {
             let char = text[index].toUpperCase();
             let encodedChar = polybiusSquare[char] || char;
+            
             if (!polybiusSquare[char]) {
                 document.getElementById('anim-text').innerText += char + ' ';
             } else {
@@ -140,16 +142,16 @@ function animatePolibioEncryption(text) {
                 document.getElementById('polibio-match').innerText = `Letra: ${char} → Código: ${encodedChar}`;
                 let cell = d3.select(`#cell-${encodedChar}`);
                 if (!cell.empty()) {
-                    cell.transition().duration(1000).style("background", "yellow");
+                    cell.transition().delay(300).duration(1000).style("background", "rgb(71,235,180)");
                 }
             }
             index++;
-            setTimeout(animate, 1000);
+            setTimeout(animate, 1300); // Aumenta el tiempo para evitar superposiciones
         }
     }
     setTimeout(() => {
         d3.select("#polibio-table").html(generatePolibioTable(text));
-        animate();
+        setTimeout(animate, 1000); // Asegura que la limpieza ocurra antes de iniciar
     }, 1000);
 }
 
